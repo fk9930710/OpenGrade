@@ -1,0 +1,52 @@
+{
+  "id": "example-warm-grade-001",
+  "title": "Example Warm Grade",
+  "description": "Example command batch for the local Agent Bridge.",
+  "source": "agent",
+  "commands": [
+    {
+      "type": "layer.addMask",
+      "layerId": "mask-example-subject",
+      "layer": {
+        "name": "Example Subject Mask",
+        "shape": "ellipse",
+        "x": 0.5,
+        "y": 0.52,
+        "width": 0.42,
+        "height": 0.56,
+        "feather": 0.3,
+        "opacity": 1
+      },
+      "source": "agent"
+    },
+    {
+      "type": "operation.add",
+      "operationId": "op-example-exposure",
+      "operationType": "Exposure",
+      "values": {
+        "Exposure": 0.15,
+        "Blend": 100
+      },
+      "source": "agent",
+      "commandText": "agent add Exposure +0.15"
+    },
+    {
+      "type": "operation.add",
+      "operationId": "op-example-warm-subject",
+      "operationType": "WhiteBalance",
+      "values": {
+        "Temperature": 360,
+        "Tint": 4,
+        "Blend": 100
+      },
+      "masks": [
+        {
+          "layerId": "mask-example-subject",
+          "mode": "add"
+        }
+      ],
+      "source": "agent",
+      "commandText": "agent add warm white balance to the example subject mask"
+    }
+  ]
+}

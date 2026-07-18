@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "root": "/Volumes/YourDrive/OpenGrade/data",
+  "paths": {
+    "assets": "/Volumes/YourDrive/OpenGrade/data/assets",
+    "models": "/Volumes/YourDrive/OpenGrade/data/models",
+    "cache": "/Volumes/YourDrive/OpenGrade/data/cache",
+    "proxies": "/Volumes/YourDrive/OpenGrade/data/proxies",
+    "renders": "/Volumes/YourDrive/OpenGrade/data/renders",
+    "projects": "/Volumes/YourDrive/OpenGrade/data/projects",
+    "exports": "/Volumes/YourDrive/OpenGrade/data/exports",
+    "temp": "/Volumes/YourDrive/OpenGrade/data/tmp"
+  }
+}
