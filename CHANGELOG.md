@@ -4,6 +4,51 @@ This file is a handoff log for future contributors. Keep entries concise and
 focused on what changed, why it changed, which files moved, and how the change
 was verified.
 
+## 2026-07-18 — README Agent Integration Guide
+
+### Goal
+
+Make the public README explain how a real AI agent should connect to OpenGrade,
+not just what the Agent Bridge JSON looks like.
+
+### Changes
+
+- Added `How To Connect A Real AI Agent` to `README.md`.
+- Documented the current local file-based bridge:
+  - agent writes `.opengrade-agent.json`
+  - Tauri app polls it
+  - Assistant panel validates new batch ids
+  - commands dispatch into the shared state reducer
+- Listed the source files involved in the bridge:
+  - `src/editors/Editors.tsx`
+  - `src/core/commandProtocol.ts`
+  - `src/types.ts`
+  - `src/core/mockClient.ts`
+  - `src/core/coreBackend.ts`
+- Added an agent workflow:
+  - inspect image/reference
+  - compute color/luma stats
+  - plan the grade
+  - write a new command batch
+  - log reasoning with `assistant.apply`
+  - inspect and revise
+- Added a minimal agent output contract and clarified stable
+  `operationId`/`layerId` usage.
+- Explained how Codex can connect today through the local project folder.
+- Explained future Web transport options:
+  - paste/upload JSON
+  - local WebSocket bridge
+  - cloud session bridge
+
+### Files Changed
+
+- `README.md`
+- `CHANGELOG.md`
+
+### Verification
+
+- Not run; documentation only.
+
 ## 2026-07-18 — GitHub README And Ignore Cleanup
 
 ### Goal

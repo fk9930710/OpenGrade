@@ -171,7 +171,171 @@ Masks can also be created and attached in the same batch by using stable IDs:
 }
 ```
 
-More detailed agent instructions live in `AGENTS.md`.
+## How To Connect A Real AI Agent
+
+OpenGrade does not require an AI API key today. The current integration model
+is deliberately simple: an external agent writes a command batch, and the app
+applies it through the same reducer used by the GUI.
+
+### Current Local Bridge
+
+For the desktop app, the bridge is file-based:
+
+```text
+AI agent / script / Codex
+    writes .opengrade-agent.json
+        ↓
+Tauri app polls the file
+        ↓
+AssistantEditor validates the batch id
+        ↓
+commands are dispatched into MockOpenGradeClient
+        ↓
+operation stack, masks, preview, scopes, and assistant log update
+```
+
+The important implementation points are:
+
+- `src/editors/Editors.tsx`
+  The Assistant panel polls `.opengrade-agent.json` and applies new batches.
+- `src/core/commandProtocol.ts`
+  Defines `CommandBatch`, `AgentCommand`, and preset helpers.
+- `src/types.ts`
+  Defines all command/state shapes the agent is allowed to emit.
+- `src/core/mockClient.ts`
+  Applies commands to project state.
+- `src/core/coreBackend.ts`
+  Calls Tauri for image open/render/export.
+
+### What The Agent Should Do
+
+A practical agent loop looks like this:
+
+1. Inspect the source image and optional reference image.
+2. Compute useful stats:
+   - mean RGB
+   - luma percentiles
+   - saturation/value averages
+   - hue concentration
+   - clipping risk
+3. Decide on a grading plan:
+   - base correction
+   - secondary HueRange cleanup
+   - mask refinement
+   - LUT/look
+   - final trims
+4. Write `.opengrade-agent.json` with a new `id`.
+5. Include `assistant.apply` commands explaining the reasoning.
+6. Let the running app apply the batch.
+7. Inspect the resulting image/scopes and write a revised batch if needed.
+
+The batch `id` must change every time. If it does not change, the running app
+will assume it already applied that batch.
+
+### Minimal Agent Output Contract
+
+An agent should output JSON like this:
+
+```json
+{
+  "id": "unique-revision-id",
+  "title": "Readable title",
+  "description": "What the agent is trying to do.",
+  "source": "agent",
+  "commands": [
+    {
+      "type": "media.openPath",
+      "path": "/absolute/path/to/image.jpg",
+      "name": "image.jpg",
+      "palette": "warm",
+      "source": "agent"
+    },
+    {
+      "type": "operation.clear",
+      "source": "agent",
+      "commandText": "clear before applying a new grade"
+    },
+    {
+      "type": "operation.add",
+      "operationId": "op-base-contrast",
+      "operationType": "BasicAdjustments",
+      "values": {
+        "Contrast": 10,
+        "Highlights": -8,
+        "Shadows": 4,
+        "Whites": 2,
+        "Blacks": -6,
+        "Blend": 100
+      },
+      "source": "agent",
+      "commandText": "add a controlled base contrast pass"
+    },
+    {
+      "type": "assistant.apply",
+      "prompt": "I reduced highlights and deepened blacks after checking the luma distribution.",
+      "source": "agent"
+    }
+  ]
+}
+```
+
+For reliable targeting, agents should use stable IDs:
+
+- `operationId` for operations created by `operation.add`
+- `layerId` for masks created by `layer.addMask`
+- `masks` on `operation.add` when attaching masks immediately
+
+### Connecting Codex Today
+
+For the current local workflow, Codex can act as the agent by editing:
+
+```text
+.opengrade-agent.json
+```
+
+The desktop app must already be running:
+
+```bash
+npx tauri dev
+```
+
+Then the agent writes a new batch with a new `id`. The Assistant panel applies
+it automatically and logs the process.
+
+This works without a server because both Codex and the desktop app can access
+the same local project folder.
+
+### Connecting Another Agent Or Script
+
+Any local agent can integrate by writing the same JSON file. For example, a
+Python or Node process can:
+
+1. read/analyze images
+2. generate a `CommandBatch`
+3. write `.opengrade-agent.json`
+4. increment the `id` on every revision
+
+No OpenGrade-specific SDK is required yet. The JSON command protocol is the
+SDK.
+
+### Connecting A Web Version Later
+
+A hosted Web version cannot poll a local `.opengrade-agent.json` file. The same
+command protocol can still work, but the transport has to change:
+
+- Paste/upload bridge:
+  Let the user paste or upload an agent batch JSON in the browser.
+- Local WebSocket bridge:
+  Run a small localhost server. The agent sends batches to the server, and the
+  browser subscribes to updates.
+- Cloud session bridge:
+  The agent posts batches to a backend session API, and the browser subscribes
+  by session id.
+
+In all three cases, the core idea stays the same: the agent emits structured
+commands, and OpenGrade turns those commands into visible, editable operations.
+
+More detailed contributor and agent instructions live in `AGENTS.md`.
 
 ## Run Locally
 
